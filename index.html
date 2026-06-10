@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>文字種パターン検索</title>
+<meta name="theme-color" content="#3b5bdb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+<!-- iOS ホーム画面アプリ用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="文字種検索">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><p id="loadmsg">データを読み込み中…</p></div>
+
+<header><h1>Wikipedia 文字種パターン検索</h1></header>
+
+<main>
+  <label class="field-label">パターン</label>
+  <div id="pattern" contenteditable="true" spellcheck="false" autocapitalize="off"
+       autocorrect="off" aria-label="検索パターン"></div>
+
+  <div class="palette" id="palette">
+    <button data-type="あ">あ<small>かな</small></button>
+    <button data-type="ア">ア<small>カナ</small></button>
+    <button data-type="漢">漢<small>漢字</small></button>
+    <button data-type="1">1<small>数字</small></button>
+    <button data-type="A">A<small>英大</small></button>
+    <button data-type="a">a<small>英小</small></button>
+    <button data-type="␣">␣<small>空白</small></button>
+    <button data-type="@">@<small>記号</small></button>
+    <button id="bsp" class="util">⌫</button>
+    <button id="clr" class="util">全消去</button>
+  </div>
+
+  <div class="options">
+    <label class="seg"><input type="radio" name="mode" value="exact" checked>完全一致</label>
+    <label class="seg"><input type="radio" name="mode" value="regex">正規表現</label>
+    <label class="chk"><input type="checkbox" id="fw" checked>全角英数字を同一視</label>
+    <label class="lim">上限 <input type="number" id="limit" value="500" min="0" step="100"></label>
+  </div>
+
+  <div class="actions">
+    <button id="search" class="primary">検索</button>
+    <button id="clearres">結果クリア</button>
+  </div>
+
+  <p id="status">準備中…</p>
+  <ol id="results"></ol>
+
+  <div class="checker">
+    <label class="field-label">並び確認（任意の文字列→文字種の並び）</label>
+    <input type="text" id="check" placeholder="例: 君の名は。" autocapitalize="off">
+    <div id="checkout" class="checkout"></div>
+  </div>
+
+  <p class="note">タイトルをタップでコピー。型は<span class="chip-demo">灰色チップ</span>＝その文字種なら何でも、素の文字＝その文字そのもの。</p>
+  <p class="note">見出し語データ出典：<a href="https://ja.wikipedia.org/" target="_blank" rel="noopener">ウィキペディア日本語版</a>（© Wikipedia contributors）。
+  本データは <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a> および GFDL のもとで提供されています
+  （<a href="https://dumps.wikimedia.org/legal.html" target="_blank" rel="noopener">Wikimedia ダンプ規約</a>）。
+  改変・再配布時も同ライセンスが継承されます。</p>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
