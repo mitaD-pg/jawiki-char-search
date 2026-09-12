@@ -77,7 +77,6 @@ main {
 .lit { white-space: pre; }        /* リテラル文字（空白も見えるよう保持） */
 .composing {                       /* IME 変換中の未確定文字 */
   white-space: pre;
-  color: var(--accent);
   border-bottom: 2px solid var(--accent);
 }
 /* 自前カーソル */
