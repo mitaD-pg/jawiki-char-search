@@ -13,6 +13,7 @@ const patternWrap = $('patternWrap');
 let tokens = [];
 let caret = 0;
 let composing = false;          // IME 変換中フラグ
+let composingText = '';         // IME 変換中の未確定文字
 let focused = false;            // 入力欄がフォーカス中か
 
 // ---- データ読み込み（gzip を手動展開。ホスト差異に強くする）----
@@ -37,10 +38,13 @@ async function loadData() {
 // ---- 描画 ----
 function render() {
   patternEl.innerHTML = '';
-  patternEl.classList.toggle('empty', tokens.length === 0);
+  patternEl.classList.toggle('empty', tokens.length === 0 && !composingText);
   for (let i = 0; i <= tokens.length; i++) {
-    // 空欄でもフォーカス中はカーソルを表示（未フォーカスの空欄では出さない）
-    if (i === caret && (tokens.length > 0 || focused)) patternEl.appendChild(makeCaret());
+    if (i === caret) {
+      // IME 変換中の文字はカーソル位置にインライン表示
+      if (composingText) patternEl.appendChild(makeComposing(composingText));
+      else if (tokens.length > 0 || focused) patternEl.appendChild(makeCaret());
+    }
     if (i < tokens.length) patternEl.appendChild(makeToken(tokens[i], i));
   }
 }
@@ -49,6 +53,13 @@ function makeCaret() {
   const c = document.createElement('span');
   c.className = 'caret';
   return c;
+}
+
+function makeComposing(text) {
+  const s = document.createElement('span');
+  s.className = 'composing';
+  s.textContent = text;
+  return s;
 }
 
 function makeToken(tok, i) {
@@ -217,13 +228,22 @@ function wire() {
   });
 
   // リテラル文字入力（隠し input 経由。IME 対応）
-  litInput.addEventListener('compositionstart', () => { composing = true; });
+  litInput.addEventListener('compositionstart', () => {
+    composing = true;
+    composingText = '';
+  });
+  litInput.addEventListener('compositionupdate', () => {
+    composingText = litInput.value;      // 変換中の未確定文字をプレビュー
+    render();
+  });
   litInput.addEventListener('compositionend', () => {
     composing = false;
-    flushLiteral();
+    composingText = '';
+    flushLiteral();                      // 確定文字を取り込む
   });
   litInput.addEventListener('input', () => {
-    if (!composing) flushLiteral();
+    if (composing) { composingText = litInput.value; render(); }
+    else if (litInput.value) flushLiteral();   // IME なしの直接入力
   });
   litInput.addEventListener('keydown', (e) => {
     if (composing) return;
