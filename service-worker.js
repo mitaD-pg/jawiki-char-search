@@ -1,5 +1,5 @@
 /* オフライン対応：アプリ一式とデータをキャッシュする */
-const CACHE = 'jawiki-v3';
+const CACHE = 'jawiki-v4';
 const ASSETS = [
   './',
   'index.html',

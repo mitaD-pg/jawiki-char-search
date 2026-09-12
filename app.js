@@ -38,7 +38,8 @@ function render() {
   patternEl.innerHTML = '';
   patternEl.classList.toggle('empty', tokens.length === 0);
   for (let i = 0; i <= tokens.length; i++) {
-    if (i === caret) patternEl.appendChild(makeCaret());
+    // 空欄（プレースホルダ表示中）はカーソルを出さない
+    if (i === caret && tokens.length > 0) patternEl.appendChild(makeCaret());
     if (i < tokens.length) patternEl.appendChild(makeToken(tokens[i], i));
   }
 }
