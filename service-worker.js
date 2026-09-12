@@ -1,5 +1,7 @@
-/* オフライン対応：アプリ一式とデータをキャッシュする */
-const CACHE = 'jawiki-v4';
+/* オフライン対応：
+ *  - アプリ本体(HTML/JS/CSS等)はネット優先（更新を即反映、オフライン時のみキャッシュ）
+ *  - 大きなデータ(.gz)はキャッシュ優先（毎回DLしない） */
+const CACHE = 'jawiki-v5';
 const ASSETS = [
   './',
   'index.html',
@@ -29,9 +31,30 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+
+  // 大きなデータ(.gz)はキャッシュ優先（無ければ取得して保存）
+  if (url.pathname.endsWith('.gz')) {
+    e.respondWith(
+      caches.match(e.request).then((cached) =>
+        cached || fetch(e.request).then((resp) => {
+          const copy = resp.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return resp;
+        })
+      )
+    );
+    return;
+  }
+
+  // アプリ本体はネット優先（最新を取得しキャッシュ更新。オフライン時はキャッシュ）
   e.respondWith(
-    caches.match(e.request).then((cached) =>
-      cached || fetch(e.request).catch(() => caches.match('index.html'))
+    fetch(e.request).then((resp) => {
+      const copy = resp.clone();
+      caches.open(CACHE).then((c) => c.put(e.request, copy));
+      return resp;
+    }).catch(() =>
+      caches.match(e.request).then((cached) => cached || caches.match('index.html'))
     )
   );
 });
