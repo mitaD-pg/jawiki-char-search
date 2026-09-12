@@ -13,6 +13,7 @@ const patternWrap = $('patternWrap');
 let tokens = [];
 let caret = 0;
 let composing = false;          // IME 変換中フラグ
+let focused = false;            // 入力欄がフォーカス中か
 
 // ---- データ読み込み（gzip を手動展開。ホスト差異に強くする）----
 async function loadData() {
@@ -38,8 +39,8 @@ function render() {
   patternEl.innerHTML = '';
   patternEl.classList.toggle('empty', tokens.length === 0);
   for (let i = 0; i <= tokens.length; i++) {
-    // 空欄（プレースホルダ表示中）はカーソルを出さない
-    if (i === caret && tokens.length > 0) patternEl.appendChild(makeCaret());
+    // 空欄でもフォーカス中はカーソルを表示（未フォーカスの空欄では出さない）
+    if (i === caret && (tokens.length > 0 || focused)) patternEl.appendChild(makeCaret());
     if (i < tokens.length) patternEl.appendChild(makeToken(tokens[i], i));
   }
 }
@@ -231,8 +232,16 @@ function wire() {
     else if (e.key === 'ArrowLeft' && litInput.value === '') { e.preventDefault(); moveCaret(-1); }
     else if (e.key === 'ArrowRight' && litInput.value === '') { e.preventDefault(); moveCaret(1); }
   });
-  litInput.addEventListener('focus', () => patternWrap.classList.add('focused'));
-  litInput.addEventListener('blur', () => patternWrap.classList.remove('focused'));
+  litInput.addEventListener('focus', () => {
+    focused = true;
+    patternWrap.classList.add('focused');
+    render();                          // 空欄でもカーソルを表示
+  });
+  litInput.addEventListener('blur', () => {
+    focused = false;
+    patternWrap.classList.remove('focused');
+    render();                          // 空欄ならカーソルを消す
+  });
 
   // 検索・結果
   $('search').addEventListener('click', runSearch);

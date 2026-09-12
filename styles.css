@@ -55,6 +55,8 @@ main {
   content: "パレットや文字で入力";
   color: #b3b8c0;
 }
+/* フォーカス中はプレースホルダを消し、カーソルを左端に見せる */
+#patternWrap.focused #pattern.empty::before { content: ""; }
 /* 画面外に置かず、透明でパターン欄に重ねる（フォーカス＝キーボード用） */
 #litinput {
   position: absolute; inset: 0;

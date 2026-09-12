@@ -1,7 +1,7 @@
 /* オフライン対応：
  *  - アプリ本体(HTML/JS/CSS等)はネット優先（更新を即反映、オフライン時のみキャッシュ）
  *  - 大きなデータ(.gz)はキャッシュ優先（毎回DLしない） */
-const CACHE = 'jawiki-v5';
+const CACHE = 'jawiki-v6';
 const ASSETS = [
   './',
   'index.html',
