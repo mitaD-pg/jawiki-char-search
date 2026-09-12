@@ -157,9 +157,9 @@
     return results;
   }
 
-  // 正規表現（署名に対するマッチ）
-  function searchRegex(data, pattern, fullwidth, limit, emit) {
-    const rx = new RegExp('^(?:' + pattern + ')$', 'u');
+  // 正規表現（署名に対するマッチ）。ci=大文字小文字を区別しない
+  function searchRegex(data, pattern, fullwidth, limit, ci, emit) {
+    const rx = new RegExp('^(?:' + pattern + ')$', ci ? 'iu' : 'u');
     const index = data.index;
     const results = [];
     const push = (t) => {
@@ -208,8 +208,31 @@
   }
 
   // 正規表現を「実タイトル」に対してマッチ（チップ＝型ワイルドカード、リテラル可）
-  function searchRegexTitle(data, pattern, fullwidth, limit, emit) {
-    const rx = new RegExp('^(?:' + toTitleRegexSource(pattern, fullwidth) + ')$', 'u');
+  function searchRegexTitle(data, pattern, fullwidth, limit, ci, emit) {
+    const rx = new RegExp('^(?:' + toTitleRegexSource(pattern, fullwidth) + ')$',
+                          ci ? 'iu' : 'u');
+    return scanTitles(data, rx, limit, emit);
+  }
+
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // 完全一致を「実タイトル」に対してマッチ（大小無視トグル用）。
+  // 型チップ→文字クラス、リテラル→エスケープして厳密一致。
+  function searchMixedTitle(data, pattern, fullwidth, limit, ci, emit) {
+    let src = '';
+    for (const t of parseMixed(pattern)) {
+      src += (t.kind === 'type')
+        ? (titleClass(t.val, fullwidth) || escapeRegExp(t.val))
+        : escapeRegExp(t.val);
+    }
+    const rx = new RegExp('^(?:' + src + ')$', ci ? 'iu' : 'u');
+    return scanTitles(data, rx, limit, emit);
+  }
+
+  // 全タイトルを走査して正規表現に一致するものを集める
+  function scanTitles(data, rx, limit, emit) {
     const index = data.index;
     const results = [];
     for (const sig in index) {
@@ -227,7 +250,8 @@
   const api = {
     HIRAGANA, KATAKANA, KANJI, DIGIT, UPPER, LOWER, SPACE, SYMBOL,
     TYPE_ALPHABET, classifyChar, signature, parseMixed, mixedSignature,
-    mixedMatch, searchMixed, searchRegex, searchRegexTitle, toTitleRegexSource,
+    mixedMatch, searchMixed, searchRegex, searchRegexTitle, searchMixedTitle,
+    toTitleRegexSource,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
