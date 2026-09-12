@@ -186,10 +186,48 @@
     return results;
   }
 
+  // 型記号 → 実タイトル用の正規表現文字クラス（u フラグ前提）
+  function titleClass(sym, fw) {
+    switch (sym) {
+      case HIRAGANA: return '[\\u3041-\\u3096\\u309D-\\u309F]';
+      case KATAKANA: return '[\\u30A1-\\u30FA\\u30FC-\\u30FF\\u31F0-\\u31FF\\uFF66-\\uFF9D]';
+      case KANJI:    return '[\\u3005-\\u3007\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF'
+                          + '\\u{20000}-\\u{2A6DF}\\u{2A700}-\\u{2EBEF}\\u{2F800}-\\u{2FA1F}]';
+      case DIGIT:    return fw ? '[0-9\\uFF10-\\uFF19]' : '[0-9]';
+      case UPPER:    return fw ? '[A-Z\\uFF21-\\uFF3A]' : '[A-Z]';
+      case LOWER:    return fw ? '[a-z\\uFF41-\\uFF5A]' : '[a-z]';
+      case SPACE:    return '[\\p{Zs}]';
+      case SYMBOL:   return '.';   // 近似（任意の1文字）
+      default:       return null;
+    }
+  }
+
+  // [漢] 等の単一型記号ブラケットを文字クラスに置換。他はそのまま（正規表現）
+  function toTitleRegexSource(pattern, fw) {
+    return pattern.replace(/\[(.)\]/gu, (m, ch) => titleClass(ch, fw) || m);
+  }
+
+  // 正規表現を「実タイトル」に対してマッチ（チップ＝型ワイルドカード、リテラル可）
+  function searchRegexTitle(data, pattern, fullwidth, limit, emit) {
+    const rx = new RegExp('^(?:' + toTitleRegexSource(pattern, fullwidth) + ')$', 'u');
+    const index = data.index;
+    const results = [];
+    for (const sig in index) {
+      for (const title of index[sig].split('\n')) {
+        if (rx.test(title)) {
+          results.push(title);
+          if (emit) emit(title);
+          if (limit && results.length >= limit) return results;
+        }
+      }
+    }
+    return results;
+  }
+
   const api = {
     HIRAGANA, KATAKANA, KANJI, DIGIT, UPPER, LOWER, SPACE, SYMBOL,
     TYPE_ALPHABET, classifyChar, signature, parseMixed, mixedSignature,
-    mixedMatch, searchMixed, searchRegex,
+    mixedMatch, searchMixed, searchRegex, searchRegexTitle, toTitleRegexSource,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

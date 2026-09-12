@@ -141,20 +141,41 @@ function currentMode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
 
+// 正規表現に「具体的な文字（リテラル）」が含まれるか
+const REGEX_META = new Set(
+  ['.', '*', '+', '?', '{', '}', '(', ')', '[', ']', '|', '\\', '^', '$', ',', '-']);
+function regexHasLiteral() {
+  return tokens.some((t) => t.kind === 'lit' && !REGEX_META.has(t.val));
+}
+
 function runSearch() {
   if (!DATA) return;
   const pattern = getPattern();
   if (!pattern) { toast('パターンを入力してください'); return; }
+  const mode = currentMode();
+  // リテラルを含む正規表現は実タイトル走査（重い）→ 先に「検索中…」を描画
+  const heavy = (mode === 'regex') && regexHasLiteral();
+  if (heavy) {
+    $('status').textContent = '検索中…';
+    setTimeout(() => execSearch(pattern, mode), 16);
+  } else {
+    execSearch(pattern, mode);
+  }
+}
+
+function execSearch(pattern, mode) {
   const fw = $('fw').checked;
   const limit = parseInt($('limit').value || '0', 10) || 0;
-  const mode = currentMode();
-
   const t0 = performance.now();
   let hits;
   try {
-    hits = (mode === 'regex')
-      ? E.searchRegex(DATA, pattern, fw, limit)
-      : E.searchMixed(DATA, pattern, fw, limit);
+    if (mode === 'regex') {
+      hits = regexHasLiteral()
+        ? E.searchRegexTitle(DATA, pattern, fw, limit)   // 文字混在→実タイトル照合
+        : E.searchRegex(DATA, pattern, fw, limit);       // 型のみ→署名照合（高速）
+    } else {
+      hits = E.searchMixed(DATA, pattern, fw, limit);
+    }
   } catch (err) {
     $('status').textContent = 'エラー: ' + err.message;
     return;
